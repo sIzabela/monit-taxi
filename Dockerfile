@@ -42,8 +42,6 @@ RUN apk add --no-cache \
 
 # Kopiowanie plików aplikacji
 COPY . .
-# Skopiuj plik rclone.conf do kontenera
-COPY rclone.conf /root/.config/rclone/rclone.conf
 
 # Zaktualizuj pip
 RUN pip install --upgrade pip && \

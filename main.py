@@ -18,6 +18,7 @@ with open('config.json') as f:
 paths_date = datetime.datetime.now().strftime("%Y%m%d")
 
 SP_PATH = config['paths']['sp_path']
+SP_PATH_TEST = config['tests']['sp_path_test']
 BASE_PATH = config['paths']['base_path'].format(paths_date=paths_date)
 PLIK = config['paths']['baza_file'].format(base_path=BASE_PATH, paths_date=paths_date)
 KONCOWY_FILE = config['paths']['koncowy_file'].format(paths_date=paths_date)
@@ -35,6 +36,7 @@ TEST_MAIL_KILKA = config['tests']['test_mail_kilka']
 # ================================================== DEBUG ==================================================
 DEBUG = config['debug'].lower() == 'true'  # tryb DEBUG
 DEBUG_mails = config['debug_mails'].lower() == 'true'  # wysyłanie maili w trybie DEBUG
+SP_UPLOAD = config['sp_upload'].lower() == 'true'  # czy wrzucać na SP
 
 setup_logging()
 log_message("Rozpoczynam prace tryb DEBUG: " + str(DEBUG))
@@ -161,9 +163,21 @@ else:  # Wznawianie przerwanej pracy na wysyłce maili
 
 if DEBUG:
     send_end_debug(koncowy_path, KONCOWY_FILE, DEBUG_mails, ilosc_rekordow)
+    if SP_UPLOAD:
+        log_message('Rozpoczynam kopiowanie plików do folderu na SP')
+        upload_success = upload_to_SP(BASE_PATH, SP_PATH_TEST)
+        if not upload_success:
+            error_msg = "Rclone: Błąd przesyłania folderu na SP. Sprawdź logi."
+            log_message(error_msg)
+            send_error_email(error_msg)
 else:
-    log_message('Rozpoczynam kopiowanie plików do folderu na SP')
-    upload_to_SP(BASE_PATH, SP_PATH)
+    if SP_UPLOAD:
+        log_message('Rozpoczynam kopiowanie plików do folderu na SP')
+        upload_success = upload_to_SP(BASE_PATH, SP_PATH)
+        if not upload_success:
+            error_msg = "Rclone: Błąd przesyłania folderu na SP. Sprawdź logi."
+            log_message(error_msg)
+            send_error_email(error_msg)
 
     log_message('Rozpoczynanie wysyłki maili')
     send_end_email(koncowy_path, KONCOWY_FILE, paths_date, ilosc_rekordow)
